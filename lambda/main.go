@@ -1,29 +1,34 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
-	"net/url"
 
-	vt "github.com/VirusTotal/vt-go"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/likexian/whois-go"
+	whoisparser "github.com/likexian/whois-parser-go"
 )
 
-func main() {
-	result, err := whois.Whois("likexian.com")
-	if err == nil {
-		fmt.Println(result)
-	}
-	var apikey = "a749ffc43346e9086a589f9758b0312008b8bcbd62fb9ee85a7fc6faa67c565d"
-	client := vt.NewClient(apikey)
-	u, err := url.Parse("http://bing.com/search?q=dotnet")
-	if err != nil {
-		log.Fatal(err)
-	}
-	resp, err := client.Get(u)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(resp)
+//MyEvent event intake
+type MyEvent struct {
+	Domain string `json:"domain"`
+}
 
+func x(ctx context.Context, input MyEvent) (whoisparser.WhoisInfo, error) {
+	result, err := whois.Whois(input.Domain)
+	if err != nil {
+		log.Fatal(err)
+	}
+	parsResult, err := whoisparser.Parse(result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return parsResult, nil
+
+}
+
+func main() {
+
+	lambda.Start(x)
 }
