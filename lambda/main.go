@@ -2,30 +2,29 @@ package main
 
 import (
 	"context"
-	"log"
+	"encoding/json"
+	"net/http"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
 	"github.com/likexian/whois-go"
 	whoisparser "github.com/likexian/whois-parser-go"
 )
 
-//MyEvent event intake
-type MyEvent struct {
-	Domain string `json:"domain"`
-}
+func x(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	domain := req.QueryStringParameters["domain"]
 
-func x(ctx context.Context, input MyEvent) (whoisparser.WhoisInfo, error) {
-	result, err := whois.Whois(input.Domain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	parsResult, err := whoisparser.Parse(result)
-	if err != nil {
-		log.Fatal(err)
-	}
+	result, _ := whois.Whois(domain)
+	parsResult, _ := whoisparser.Parse(result)
 
-	return parsResult, nil
-
+	resp := events.APIGatewayProxyResponse{}
+	stringBody, _ := json.Marshal(parsResult)
+	resp.Body = string(stringBody)
+	resp.StatusCode = http.StatusOK
+	resp.IsBase64Encoded = false
+	resp.Headers = map[string]string{"Content-Type": "application/json"}
+	return &resp, nil
 }
 
 func main() {
