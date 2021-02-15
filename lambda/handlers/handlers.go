@@ -30,13 +30,10 @@ func VirusTotalURLHandler(domain string) (string, error) {
 	apikey := getAWSSecret()
 	apiurl := "https://www.virustotal.com/vtapi/v2/"
 
-	c, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
-
-	// get a domain report (passive dns info)
-	d, _ := c.GetDomainReport(domain)
-
-	j, _ := json.MarshalIndent(d, "", "  ")
-	return string(j), nil
+	client, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
+	domainReport, _ := client.GetDomainReport(domain)
+	jsonReport, _ := json.Marshal(domainReport)
+	return string(jsonReport), nil
 }
 
 //VirusTotalHashHandler is a wrapper for th virus total website via a golang package
@@ -45,14 +42,12 @@ func VirusTotalHashHandler(hash string) (string, error) {
 	apikey := getAWSSecret()
 	apiurl := "https://www.virustotal.com/vtapi/v2/"
 
-	c, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
-
-	// get a domain report (passive dns info)
-	d, _ := c.GetFileReport(hash)
-
-	j, _ := json.MarshalIndent(d, "", "  ")
-	return string(j), nil
+	client, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
+	fileReport, _ := client.GetFileReport(hash)
+	jsonReport, _ := json.Marshal(fileReport)
+	return string(jsonReport), nil
 }
+
 func getAWSSecret() string {
 	secretName := "virustotalapi"
 	region := "us-east-2"

@@ -13,23 +13,22 @@ func router(ctx context.Context, req events.APIGatewayProxyRequest) (*events.API
 	lookuptype := req.QueryStringParameters["lookuptype"]
 
 	var bodystring string
+
+	if lookuptype == "vt" {
+		hash := req.QueryStringParameters["hash"]
+		if hash != "" {
+			s, _ := handlers.VirusTotalURLHandler(hash)
+			bodystring = s
+		}
+		domain := req.QueryStringParameters["domain"]
+		s, _ := handlers.VirusTotalURLHandler(domain)
+		bodystring = s
+
+	}
 	if lookuptype == "whois" {
 		domain := req.QueryStringParameters["domain"]
 		s, _ := handlers.WhoisHandler(domain)
 		bodystring = s
-	}
-	if lookuptype == "vt" {
-		filehash := req.QueryStringParameters["hash"]
-		if filehash != "" {
-			s, _ := handlers.VirusTotalURLHandler("domain")
-			bodystring = s
-		}
-		domain := req.QueryStringParameters["domain"]
-		if domain != "" {
-			s, _ := handlers.VirusTotalURLHandler(domain)
-			bodystring = s
-		}
-
 	}
 	resp := events.APIGatewayProxyResponse{}
 	resp.Body = string(bodystring)
