@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,7 +10,7 @@ import (
 	"github.com/likexian/whois-go"
 	whoisparser "github.com/likexian/whois-parser-go"
 
-	vt "github.com/VirusTotal/vt-go"
+	"github.com/williballenthin/govt"
 )
 
 //WhoisHandler is a wrapper for th whois website via a golang package
@@ -25,25 +24,45 @@ func WhoisHandler(domain string) (string, error) {
 	return string(stringBody), nil
 }
 
-//VirusTotalHandler is a wrapper for th whois website via a golang package
+//VirusTotalURLHandler is a wrapper for th virus total website via a golang package
 //it takes the aws gateway request and returns a response
-func VirusTotalHandler(filehash string) (string, error) {
+func VirusTotalURLHandler(domain string) (string, error) {
+	apikey := getAWSSecret()
+	apiurl := "https://www.virustotal.com/vtapi/v2/"
 
-	apikey := getAWSSecret
-	client := vt.NewClient(apikey())
-	file, err := client.GetObject(vt.URL("files/%s", filehash))
-	if err != nil {
-		log.Fatal(err)
-	}
-	stringBody, _ := json.Marshal(file)
-	return string(stringBody), nil
+	c, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
 
+	// get a domain report (passive dns info)
+	d, _ := c.GetDomainReport(domain)
+
+	j, _ := json.MarshalIndent(d, "", "  ")
+	return string(j), nil
 }
 
+//VirusTotalHashHandler is a wrapper for th virus total website via a golang package
+//it takes the aws gateway request and returns a response
+func VirusTotalHashHandler(hash string) (string, error) {
+	apikey := getAWSSecret()
+	apiurl := "https://www.virustotal.com/vtapi/v2/"
+
+	c, _ := govt.New(govt.SetApikey(apikey), govt.SetUrl(apiurl))
+
+	// get a domain report (passive dns info)
+	d, _ := c.GetFileReport(hash)
+
+	j, _ := json.MarshalIndent(d, "", "  ")
+	return string(j), nil
+}
 func getAWSSecret() string {
-	svc := secretsmanager.New(session.New())
+	secretName := "virustotalapi"
+	region := "us-east-2"
+
+	//Create a Secrets Manager client
+	svc := secretsmanager.New(session.New(),
+		aws.NewConfig().WithRegion(region))
 	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String("virustotalapi"),
+		SecretId:     aws.String(secretName),
+		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
 	}
 	result, _ := svc.GetSecretValue(input)
 	return *result.SecretString

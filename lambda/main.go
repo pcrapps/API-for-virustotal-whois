@@ -19,9 +19,17 @@ func router(ctx context.Context, req events.APIGatewayProxyRequest) (*events.API
 		bodystring = s
 	}
 	if lookuptype == "vt" {
-		filehash := req.QueryStringParameters["filehash"]
-		s, _ := handlers.VirusTotalHandler(filehash)
-		bodystring = s
+		filehash := req.QueryStringParameters["hash"]
+		if filehash != "" {
+			s, _ := handlers.VirusTotalURLHandler("domain")
+			bodystring = s
+		}
+		domain := req.QueryStringParameters["domain"]
+		if domain != "" {
+			s, _ := handlers.VirusTotalURLHandler(domain)
+			bodystring = s
+		}
+
 	}
 	resp := events.APIGatewayProxyResponse{}
 	resp.Body = string(bodystring)
